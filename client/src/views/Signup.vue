@@ -1,10 +1,13 @@
 <template>
   <section>
     <h1>Inscription</h1>
+    <div v-if="signingUp">
+      <img src="../assets/loading.svg" />
+    </div>
     <div v-if="errorMessage" class="alert alert-danger" role="alert">
       {{ errorMessage }}
     </div>
-    <form @submit.prevent="signup">
+    <form v-if="!signingUp" @submit.prevent="signup">
       <div class="form-group">
         <label for="username">Nom d'utilisateur</label>
         <input
@@ -85,8 +88,9 @@ const schema = Joi.object().keys({
 
 export default {
   data: () => ({
+    signingUp: false,
+    errorMessage: '',
     user: {
-      errorMessage: '',
       username: '',
       password: '',
       confirmPassword: ''
@@ -108,25 +112,35 @@ export default {
           username: this.user.username,
           password: this.user.password
         }
+        this.signingUp = true
         fetch(SIGNUP_URL, {
           method: 'POST',
           body: JSON.stringify(body),
           headers: {
             'content-type': 'application/json'
           }
-        }).then(response => {
-          if (response.ok) {
-            return response.json()
-          }
-
-          response.json.then((error) => {
-            throw new Error(error.message)
-          })
-        }).then((user) => {
-          return user.true
-        }).catch((error) =>{
-          this.errorMessage = error.message;
         })
+          .then((response) => {
+            if (response.ok) {
+              return response.json()
+            }
+
+            response.json.then(error => {
+              throw new Error(error.message)
+            })
+          })
+          .then(() => {
+            setTimeout(() => {
+              this.signingUp = false
+              this.$router.push('/login')
+            }, 1000)
+          })
+          .catch(error => {
+            setTimeout(() => {
+              this.signingUp = false
+              this.errorMessage = error.message
+            }, 10000)
+          })
       }
     },
     validUser() {
@@ -136,14 +150,15 @@ export default {
       }
 
       const result = Joi.validate(this.user, schema)
+
+      if (result.error === null) return true
+
       if (result.error.message.includes('username')) {
         this.errorMessage = "Nom d'utilisateur invalide"
       } else {
         this.errorMessage = 'Mot de passe invalide'
       }
-      return result.error === null
-
-      
+      return false
     }
   }
 }
