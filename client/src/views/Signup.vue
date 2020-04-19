@@ -72,7 +72,7 @@ const SIGNUP_URL = 'http://localhost:5000/auth/signup'
 
 const schema = Joi.object().keys({
   username: Joi.string()
-    .regex(/(^[a-zA-Z0-9_])*$/)
+    .regex(/^[a-zA-Z0-9_]*$/)
     .min(2)
     .max(30)
     .required(),
@@ -150,7 +150,7 @@ export default {
       }
 
       const result = Joi.validate(this.user, schema)
-
+      
       if (result.error === null) return true
 
       if (result.error.message.includes('username')) {

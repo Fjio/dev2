@@ -7,7 +7,7 @@
 
  app.use(volleyball);
  app.use(cors({
-     origin: 'htpp://localhost:8080'
+     origin: 'http://localhost:8080'
  }))
  app.use(express.json());
 
