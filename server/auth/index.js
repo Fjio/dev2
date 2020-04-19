@@ -31,6 +31,7 @@ router.post('/signup', (req,res,next) =>{
         }).then(user => {
             if (user) {
                 const error = new Error('Username already taken');
+                res.status(409);
                 next(error);
             } else {
                 bcrypt.hash(req.body.password, 12).then(hashedPassword => {
@@ -47,6 +48,7 @@ router.post('/signup', (req,res,next) =>{
         })
         .catch(err => console.log(err));
     } else{
+        res.status(422);
         next(result.error);
     }
 });

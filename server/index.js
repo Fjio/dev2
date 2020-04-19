@@ -1,12 +1,14 @@
  const express = require('express');
  const volleyball = require('volleyball');
- //const cors = require('cors');
+ const cors = require('cors');
  const app = express();
 //pareil que de mettre ./auth/index.js
  const auth = require('./auth');
 
  app.use(volleyball);
- 
+ app.use(cors({
+     origin: 'htpp://localhost:8080'
+ }))
  app.use(express.json());
 
  app.get('/', (req,res) =>{

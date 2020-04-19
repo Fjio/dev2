@@ -1,14 +1,17 @@
 <template>
   <section>
     <h1>Inscription</h1>
-    <form @submi.prevent="signup">
+    <div v-if="errorMessage" class="alert alert-danger" role="alert">
+      {{ errorMessage }}
+    </div>
+    <form @submit.prevent="signup">
       <div class="form-group">
         <label for="username">Nom d'utilisateur</label>
         <input
+          id="username"
           v-model="user.username"
           type="text"
           class="form-control"
-          id="username"
           aria-describedby="usernameHelp"
           placeholder="Entrez un nom d'utilisateur"
           required
@@ -22,10 +25,10 @@
         <div class="form-group col-md-6">
           <label for="password">Mot de passe</label>
           <input
+            id="password"
             v-model="user.password"
             type="password"
             class="form-control"
-            id="password"
             aria-describedby="passwordHelp"
             placeholder="Mot de passe"
             required
@@ -38,44 +41,112 @@
         <div class="form-group col-md-6">
           <label for="confirmPassword">Confirmation du mot de passe</label>
           <input
-            v-model = "user.confirmPassword"
+            id="confirmPassword"
+            v-model="user.confirmPassword"
             type="password"
             class="form-control"
-            id="confirmPassword"
             aria-describedby="confirmPasswordHelp"
             placeholder="Mot de passe"
             required
           />
-          <small id="ConfirmPasswordHelp" class="form-text text-muted"
-            >Entrez le mot de passe à nouveau.</small
-          >
+          <small
+            id="ConfirmPasswordHelp"
+            class="form-text text-muted"
+          >Entrez le mot de passe à nouveau.</small>
         </div>
       </div>
-      <button type="submit" class="btn btn-primary">S'inscrire !</button>
+      <button type="submit" class="btn btn-primary">
+        S'inscrire !
+      </button>
     </form>
   </section>
 </template>
 
 <script>
+import Joi from 'joi'
+
+const SIGNUP_URL = 'http://localhost:5000/auth/signup'
+
+const schema = Joi.object().keys({
+  username: Joi.string()
+    .regex(/(^[a-zA-Z0-9_])*$/)
+    .min(2)
+    .max(30)
+    .required(),
+  password: Joi.string()
+    .trim()
+    .min(10)
+    .required(),
+  confirmPassword: Joi.string()
+    .trim()
+    .min(10)
+    .required()
+})
+
 export default {
   data: () => ({
     user: {
+      errorMessage: '',
       username: '',
       password: '',
-      confirmPassword: '',
-    },
+      confirmPassword: ''
+    }
   }),
+  watch: {
+    user: {
+      handler() {
+        this.errorMessage = 'Les mots de passe doivent être identiques !'
+        return false
+      }
+    }
+  },
   methods: {
     signup() {
-      if (this.validUser()){
-        
+      this.errorMessage = ''
+      if (this.validUser()) {
+        const body = {
+          username: this.user.username,
+          password: this.user.password
+        }
+        fetch(SIGNUP_URL, {
+          method: 'POST',
+          body: JSON.stringify(body),
+          headers: {
+            'content-type': 'application/json'
+          }
+        }).then(response => {
+          if (response.ok) {
+            return response.json()
+          }
+
+          response.json.then((error) => {
+            throw new Error(error.message)
+          })
+        }).then((user) => {
+          return user.true
+        }).catch((error) =>{
+          this.errorMessage = error.message;
+        })
       }
     },
     validUser() {
+      if (this.user.password !== this.user.confirmPassword) {
+        this.errorMessage = 'Les mots de passe entrés ne sont pas identiques ❌'
+        return false
+      }
 
-    },
-  },
-};
+      const result = Joi.validate(this.user, schema)
+      if (result.error.message.includes('username')) {
+        this.errorMessage = "Nom d'utilisateur invalide"
+      } else {
+        this.errorMessage = 'Mot de passe invalide'
+      }
+      return result.error === null
+
+      
+    }
+  }
+}
 </script>
 
 <style></style>
